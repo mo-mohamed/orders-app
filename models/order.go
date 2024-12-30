@@ -38,3 +38,7 @@ func NewOrder(item Item) Order {
 		CreatedAt: time.Now().Format(timeFormat),
 	}
 }
+
+func (o *Order) Complete() {
+	o.Status = string(OrderStatus_Completed)
+}
