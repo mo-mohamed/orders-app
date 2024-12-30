@@ -14,9 +14,7 @@ type ProductDB struct {
 
 // NewProductDBService creates a new empty products service
 func NewProductDBService() *ProductDB {
-
 	p := &ProductDB{}
-
 	utils.ImportProducts(&p.products)
 	return p
 }
