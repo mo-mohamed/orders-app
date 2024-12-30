@@ -2,31 +2,38 @@ package db
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/orders-app/models"
 )
 
 type OrderDB struct {
-	orders map[string]models.Order
+	orders sync.Map
 }
 
 // NewOrderDBService creates new order db service
 func NewOrderDBService() *OrderDB {
-	return &OrderDB{
-		orders: make(map[string]models.Order),
-	}
+	return &OrderDB{}
 }
 
 // Find order for a given order id
 func (o *OrderDB) Find(id string) (models.Order, error) {
-	order, ok := o.orders[id]
+	order, ok := o.orders.Load(id)
 	if !ok {
 		return models.Order{}, fmt.Errorf("no order found for %s order id", id)
 	}
-	return order, nil
+	return toOrder(order), nil
 }
 
 // Upsert creates or updates an order in the orders database
 func (o *OrderDB) Upsert(order models.Order) {
-	o.orders[order.ID] = order
+	o.orders.Store(order.ID, order)
+}
+
+func toOrder(o any) models.Order {
+	order, ok := o.(models.Order)
+	if !ok {
+		panic(fmt.Errorf("error casting %v to order", o))
+	}
+	return order
 }
