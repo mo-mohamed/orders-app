@@ -40,7 +40,7 @@ func Test_ProcessOrder(t *testing.T) {
 			go func(wg *sync.WaitGroup) {
 				defer wg.Done()
 				order := models.NewOrder(item)
-				r.processOrders(&order)
+				r.processOrder(&order)
 			}(&wg)
 		}
 		wg.Wait()

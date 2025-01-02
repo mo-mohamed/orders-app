@@ -3,7 +3,6 @@ package repo
 import (
 	"fmt"
 	"math"
-	"sync"
 
 	"github.com/orders-app/db"
 	"github.com/orders-app/models"
@@ -13,7 +12,7 @@ import (
 type repo struct {
 	products *db.ProductDB
 	orders   *db.OrderDB
-	lock     sync.Mutex
+	incoming chan models.Order
 }
 
 // Repo is the interface we expose to outside packages
@@ -28,7 +27,9 @@ func New() (Repo, error) {
 	o := repo{
 		products: db.NewProductDBService(),
 		orders:   db.NewOrderDBService(),
+		incoming: make(chan models.Order),
 	}
+	go o.processOrders()
 	return &o, nil
 }
 
@@ -49,7 +50,7 @@ func (r *repo) CreateOrder(item models.Item) (*models.Order, error) {
 	}
 	order := models.NewOrder(item)
 	r.orders.Upsert(order)
-	r.processOrders(&order)
+	r.incoming <- order
 	return &order, nil
 }
 
@@ -64,12 +65,16 @@ func (r *repo) validateItem(item models.Item) error {
 	return nil
 }
 
-func (r *repo) processOrders(order *models.Order) {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-	r.processOrder(order)
-	r.orders.Upsert(*order)
-	fmt.Printf("Processing order %s completed\n", order.ID)
+func (r *repo) processOrders() {
+	fmt.Println("Order processing started!")
+
+	for order := range r.incoming {
+		r.processOrder(&order)
+		r.orders.Upsert(order)
+		fmt.Printf("Processing order %s completed\n", order.ID)
+	}
+
+	fmt.Println("Order processing stopped!")
 }
 
 // processOrder is an internal method which completes or rejects an order
