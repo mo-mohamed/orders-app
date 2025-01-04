@@ -19,6 +19,8 @@ type Handler interface {
 	ProductIndex(w http.ResponseWriter, r *http.Request)
 	OrderShow(w http.ResponseWriter, r *http.Request)
 	OrderInsert(w http.ResponseWriter, r *http.Request)
+	Close(w http.ResponseWriter, r *http.Request)
+	Open(w http.ResponseWriter, r *http.Request)
 }
 
 func New() (Handler, error) {
@@ -73,4 +75,22 @@ func (h *handler) OrderInsert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, http.StatusOK, order, nil)
+}
+
+func (h *handler) Open(w http.ResponseWriter, r *http.Request) {
+	if h.repo.IsAppOpen() {
+		writeResponse(w, http.StatusBadRequest, "The ordera App is already open", nil)
+	} else {
+		h.repo.Open()
+		writeResponse(w, http.StatusOK, "The ordera App is now open", nil)
+	}
+}
+
+func (h *handler) Close(w http.ResponseWriter, r *http.Request) {
+	if h.repo.IsAppOpen() {
+		h.repo.Close()
+		writeResponse(w, http.StatusOK, "The Orders App is now closed!", nil)
+	} else {
+		writeResponse(w, http.StatusOK, "The Orders App is already closed!", nil)
+	}
 }

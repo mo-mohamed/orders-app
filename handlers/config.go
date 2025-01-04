@@ -18,6 +18,10 @@ func ConfigureHandler(handler Handler) *mux.Router {
 		Handler(http.HandlerFunc(handler.OrderShow))
 	router.Methods("POST").Path("/orders").
 		Handler(http.HandlerFunc(handler.OrderInsert))
+	router.Methods("POST").Path("/close").
+		Handler(http.HandlerFunc(handler.Close))
+	router.Methods("POST").Path("/open").
+		Handler(http.HandlerFunc(handler.Open))
 
 	return router
 }
