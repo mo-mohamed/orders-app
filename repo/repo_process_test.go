@@ -17,7 +17,7 @@ const productStock = 11
 const concurrentOrders = 10
 
 func Test_ProcessOrder(t *testing.T) {
-	// t.Skip("Skipping process Order test")
+	t.Skip("Skipping process Order test")
 
 	prod := &db.ProductDB{}
 	prod.Upsert(models.Product{

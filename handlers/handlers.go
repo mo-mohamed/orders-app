@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/orders-app/models"
@@ -21,6 +23,8 @@ type Handler interface {
 	OrderInsert(w http.ResponseWriter, r *http.Request)
 	Close(w http.ResponseWriter, r *http.Request)
 	Open(w http.ResponseWriter, r *http.Request)
+	Stats(w http.ResponseWriter, r *http.Request)
+	OrderReverse(w http.ResponseWriter, r *http.Request)
 }
 
 func New() (Handler, error) {
@@ -93,4 +97,30 @@ func (h *handler) Close(w http.ResponseWriter, r *http.Request) {
 	} else {
 		writeResponse(w, http.StatusOK, "The Orders App is already closed!", nil)
 	}
+}
+
+// Stats outputs order statistics from the repo
+func (h *handler) Stats(w http.ResponseWriter, r *http.Request) {
+	reqCtx := r.Context()
+	ctx, cancel := context.WithTimeout(reqCtx, 100*time.Millisecond)
+	defer cancel()
+	stats, err := h.repo.GetOrderStats(ctx)
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, err)
+		return
+	}
+	writeResponse(w, http.StatusOK, stats, nil)
+}
+
+// OrderReverse fetches and displays one selected product
+func (h *handler) OrderReverse(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	orderId := vars["orderId"]
+	order, err := h.repo.RequestReversal(orderId)
+	if err != nil {
+		writeResponse(w, http.StatusInternalServerError, nil, err)
+		return
+	}
+
+	writeResponse(w, http.StatusOK, order, nil)
 }
