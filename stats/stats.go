@@ -112,5 +112,5 @@ func (s *statsService) GetStats(ctx context.Context) <-chan models.Statistics {
 
 func randomSleep() {
 	rand.Seed(time.Now().UnixNano())
-	time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
+	time.Sleep(time.Duration(rand.Intn(800)) * time.Millisecond)
 }

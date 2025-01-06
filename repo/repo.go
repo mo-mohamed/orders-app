@@ -12,12 +12,13 @@ import (
 
 // repo holds all the dependencies required for repo operations
 type repo struct {
-	products *db.ProductDB
-	orders   *db.OrderDB
-	incoming chan models.Order
-	stats    stats.StatsService
-	done     chan struct{}
-	isOpen   bool
+	products  *db.ProductDB
+	orders    *db.OrderDB
+	incoming  chan models.Order
+	stats     stats.StatsService
+	done      chan struct{}
+	isOpen    bool
+	processed chan models.Order
 }
 
 // Repo is the interface we expose to outside packages
@@ -38,12 +39,13 @@ func New() (Repo, error) {
 	done := make(chan struct{})
 	statsService := stats.New(processed, done)
 	o := repo{
-		products: db.NewProductDBService(),
-		orders:   db.NewOrderDBService(),
-		incoming: make(chan models.Order),
-		done:     make(chan struct{}),
-		isOpen:   true,
-		stats:    statsService,
+		products:  db.NewProductDBService(),
+		orders:    db.NewOrderDBService(),
+		incoming:  make(chan models.Order),
+		done:      make(chan struct{}),
+		isOpen:    true,
+		stats:     statsService,
+		processed: processed,
 	}
 	go o.processOrders()
 	return &o, nil
@@ -138,9 +140,10 @@ func (r *repo) processOrders() {
 	for {
 		select {
 		case order := <-r.incoming:
+			fmt.Printf("Processing order %s completed\n", order.ID)
 			r.processOrder(&order)
 			r.orders.Upsert(order)
-			fmt.Printf("Processing order %s completed\n", order.ID)
+			r.processed <- order
 		case <-r.done:
 			fmt.Println("Order processing stopped!")
 			return
