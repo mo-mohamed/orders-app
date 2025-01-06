@@ -3,6 +3,7 @@ package repo_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/orders-app/models"
 	"github.com/orders-app/repo"
@@ -20,20 +21,6 @@ func TestMain(m *testing.M) {
 }
 
 func Test_CreateOrder(t *testing.T) {
-	t.Run("create & complete order", func(t *testing.T) {
-		rp := initRepo(t)
-
-		item := models.Item{
-			ProductID: existingProduct,
-			Amount:    5,
-		}
-		order, err := rp.CreateOrder(item)
-		assert.Nil(t, err)
-		assert.NotNil(t, order)
-		assert.Equal(t, string(models.OrderStatus_new), order.Status)
-		assert.Equal(t, item, order.Item)
-		assert.Equal(t, "", order.Error)
-	})
 	t.Run("create & not enough stock order", func(t *testing.T) {
 		rp := initRepo(t)
 
@@ -41,12 +28,21 @@ func Test_CreateOrder(t *testing.T) {
 			ProductID: existingProduct,
 			Amount:    500,
 		}
-		order, err := rp.CreateOrder(item)
+		order, _ := rp.CreateOrder(item)
+		assert.NotNil(t, order)
+		assert.Equal(t, string(models.OrderStatus_new), order.Status)
+		assert.Equal(t, item, order.Item)
+		assert.Equal(t, "", order.Error)
+
+		// wait for the order to be processed
+		time.Sleep(time.Millisecond * 100)
+
+		dbOrder, err := rp.GetOrder(order.ID)
 		assert.Nil(t, err)
 		assert.NotNil(t, order)
-		assert.Equal(t, string(models.OrderStatus_Rejected), order.Status)
+		assert.Equal(t, string(models.OrderStatus_Rejected), dbOrder.Status)
 		assert.Equal(t, item, order.Item)
-		// assert.Contains(t, order.Error, "not enough stock")
+		assert.Contains(t, dbOrder.Error, "not enough stock")
 	})
 	t.Run("create & invalid item order", func(t *testing.T) {
 		rp := initRepo(t)
@@ -75,6 +71,7 @@ func Test_CreateOrder(t *testing.T) {
 	})
 
 }
+
 func Test_GetOrder(t *testing.T) {
 	t.Run("existing order", func(t *testing.T) {
 		rp := initRepo(t)
