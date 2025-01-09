@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/orders-app/logger"
 	"github.com/orders-app/models"
 	"github.com/orders-app/repo"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ func TestMain(m *testing.M) {
 	if err := os.Chdir(".."); err != nil {
 		panic(err)
 	}
+	logger.InitLogger("test")
 	code := m.Run()
 	os.Exit(code)
 }

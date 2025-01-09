@@ -2,10 +2,10 @@ package stats
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"time"
 
+	"github.com/orders-app/logger"
 	"github.com/orders-app/models"
 )
 
@@ -40,14 +40,14 @@ func New(processed <-chan models.Order, done <-chan struct{}) StatsService {
 
 // processStats is the overall processing method that listens to incoming orders
 func (s *statsService) processStats() {
-	fmt.Println("Stats processing started!")
+	logger.Log.Info("Stats processing started!")
 	for {
 		select {
 		case order := <-s.processed:
 			pstats := s.processOrder(order)
 			s.pStats <- pstats
 		case <-s.done:
-			fmt.Println("Stats processing stopped!")
+			logger.Log.Warn("Stats processing stopped!")
 			return
 		}
 	}
@@ -56,13 +56,13 @@ func (s *statsService) processStats() {
 // reconcile is a helper method which saves stats object
 // back into the statisticsService
 func (s *statsService) reconcile() {
-	fmt.Println("Reconcile started!")
+	logger.Log.Info("Reconcile started!")
 	for {
 		select {
 		case p := <-s.pStats:
 			s.result.Combine(p)
 		case <-s.done:
-			fmt.Println("Reconcile stopped!")
+			logger.Log.Warn("Reconcile stopped!")
 			return
 		}
 	}
@@ -100,10 +100,10 @@ func (s *statsService) GetStats(ctx context.Context) <-chan models.Statistics {
 		randomSleep()
 		select {
 		case stats <- s.result.Get():
-			fmt.Println("Stats fetched successfully")
+			logger.Log.Info("Stats fetched successfully")
 			return
 		case <-ctx.Done():
-			fmt.Println("Context deadline exceeded")
+			logger.Log.Info("Context deadline exceeded")
 			return
 		}
 	}()

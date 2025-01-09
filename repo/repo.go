@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/orders-app/db"
+	"github.com/orders-app/logger"
 	"github.com/orders-app/models"
 	"github.com/orders-app/stats"
 )
@@ -135,17 +136,17 @@ func (r *repo) validateItem(item models.Item) error {
 }
 
 func (r *repo) processOrders() {
-	fmt.Println("Order processing started!")
+	logger.Log.Info("Order processing started")
 
 	for {
 		select {
 		case order := <-r.incoming:
-			fmt.Printf("Processing order %s completed\n", order.ID)
 			r.processOrder(&order)
 			r.orders.Upsert(order)
 			r.processed <- order
+			logger.Log.Info(fmt.Sprintf("Processing order %s completed\n", order.ID))
 		case <-r.done:
-			fmt.Println("Order processing stopped!")
+			logger.Log.Warn("Order processing stopped!")
 			return
 		}
 	}
@@ -155,7 +156,7 @@ func (r *repo) processOrders() {
 func (r *repo) processOrder(order *models.Order) {
 	fetchedOrder, err := r.orders.Find(order.ID)
 	if err != nil || fetchedOrder.Status != string(models.OrderStatus_Completed) {
-		fmt.Println("duplicate reversal on order ", order.ID)
+		logger.Log.Info(fmt.Sprintf("duplicate reversal on order %s", order.ID))
 	}
 	item := order.Item
 	if order.Status == string(models.OrderStatus_ReversalRequested) {
