@@ -10,6 +10,8 @@ import (
 func ConfigureHandler(handler Handler) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
+	router.Use(OpenTelemetryMiddleware("orders-app"))
+
 	router.Methods("GET").Path("/").
 		Handler(http.HandlerFunc(handler.Index))
 	router.Methods("GET").Path("/products").

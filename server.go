@@ -7,10 +7,11 @@ import (
 
 	"github.com/orders-app/handlers"
 	"github.com/orders-app/logger"
+	"github.com/orders-app/tracing"
 )
 
 func init() {
-	env := os.Getenv("ENV")
+	env := os.Getenv("ACTIVE_ENV")
 	if env == "" {
 		env = "dev"
 	}
@@ -18,10 +19,14 @@ func init() {
 	logger.InitLogger(env)
 	defer logger.SyncLogger()
 
+	logger.Log.Info("Initializing Tracer")
+	cleanup := tracing.InitTracer()
+	defer cleanup()
 }
 
 func main() {
 	logger.Log.Info("Application Started")
+
 	handler, err := handlers.New()
 	if err != nil {
 		log.Fatal(err)
